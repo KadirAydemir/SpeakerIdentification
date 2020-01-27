@@ -1,0 +1,3 @@
+#!C:\Users\kadir\Desktop\Final Projects\SpeakerIdentification\venv\Scripts\python.exe
+from numba.pycc import main
+main()

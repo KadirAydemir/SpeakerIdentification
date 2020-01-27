@@ -1,0 +1,8 @@
+#!C:\Users\kadir\Desktop\Final Projects\SpeakerIdentification\venv\Scripts\python.exe
+# -*- coding: UTF-8 -*-
+from __future__ import print_function, division, absolute_import
+
+from numba.numba_entry import main
+
+if __name__ == "__main__":
+    main()
