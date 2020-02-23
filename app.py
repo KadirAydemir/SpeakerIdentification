@@ -57,9 +57,8 @@ def add_data_to_csv(newuser):
     #Take ML Data'
     x = pd.read_csv(os.path.join(app.instance_path, "features.csv"), error_bad_lines=False, encoding='utf-8').values.tolist()
     y = pd.read_csv(os.path.join(app.instance_path, "users.csv"), error_bad_lines=False, encoding='utf-8').values.tolist()
-    print(x)
     #Add new user features
-    for file in glob.glob("instance\\uploads\\newuser\\*.wav"):
+    for file in glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], 'newuser','*.wav')):
         feature = extract_feature(file, mfcc=True, chroma=True, mel=True, tempoGram=False, zeroCross=False)
         x.append(feature)
         y.append(newuser[0])
@@ -123,7 +122,7 @@ def addUser():
     os.remove(zippath)
 
     #If mp3 is exist conver to wav
-    for file in glob.glob("instance\\uploads\\newuser\\*.mp3"):
+    for file in glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], 'newuser', '*.mp3')):
         sound = AudioSegment.from_mp3(file)
         filepath = os.path.join(file.rsplit('.', 1)[0].lower()) + '.wav'
         sound.export(filepath, format('wav'))
