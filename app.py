@@ -10,6 +10,7 @@ import soundfile
 import numpy as np
 
 model = None
+emodel = None
 
 ALLOWED_EXTENSIONS = {'wav','mp3'}
 app = Flask(__name__)
@@ -80,6 +81,10 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
+@app.route('/emotion')
+def eindex():
+    return render_template('eindex.html')
+
 
 @app.route('/getUser',methods=['Post'])
 def getUser():
@@ -139,6 +144,48 @@ def addUser():
     return "Success"
 
 
+def get_emodel():
+    global emodel
+    x_train = pd.read_csv(os.path.join(app.instance_path, "efeatures.csv"), error_bad_lines=False,
+                          encoding='utf-8').to_numpy()
+    y_train = pd.read_csv(os.path.join(app.instance_path, "emotions.csv"), error_bad_lines=False,
+                          encoding='utf-8').to_numpy()
+    emodel = MLPClassifier(alpha=0.01, batch_size=256, epsilon=1e-08, hidden_layer_sizes=(500,),
+                          learning_rate='adaptive', max_iter=1500)
+    emodel.fit(x_train, y_train)
+
+@app.route('/getEmotion',methods=['Post'])
+def getEmotion():
+
+    #Take record from request
+    record = request.files['record']
+
+    #Check is mp3 or wav
+    if record and allowed_file(record.filename):
+        recordname = record.filename.rsplit('.', 1)[1].lower()
+        recordpath = os.path.join(app.config['UPLOAD_FOLDER'], record.filename)
+        record.save(recordpath) #Save in uploads folder
+
+        #If file is mp3 convert to wav
+        if recordname == 'mp3':
+            sound = AudioSegment.from_mp3(os.path.join(app.config['UPLOAD_FOLDER'], record.filename))
+            recordpath = os.path.join(app.config['UPLOAD_FOLDER'],record.filename.rsplit('.', 1)[0].lower()) + '.wav'
+            sound.export(recordpath,format('wav'))
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], record.filename)) #Delete mp3 file
+
+        feature = extract_feature(recordpath, mfcc=True, chroma=True, mel=True, tempoGram=False,zeroCross=False)
+        os.remove(recordpath)
+        x_test = feature.reshape(1, -1)
+        y_pred = emodel.predict(x_test)
+        return y_pred[0]
+
+    else:
+        return 'Wrong Format'
+
+
+
 if __name__ == '__main__':
     Thread(target=get_model()).start()
+    Thread(target=get_emodel()).start()
     app.run(debug = True)
+
